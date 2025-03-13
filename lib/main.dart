@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:to_do_list/core/theme/app_theme.dart';
+import 'package:to_do_list/features/todo/presentation/controllers/task_controller.dart';
+import 'package:to_do_list/features/todo/presentation/screens/todo_home_screen.dart';
 
 
 void main() {
   runApp(const MyApp());
+  Get.put(TaskController());
 }
 
 class MyApp extends StatelessWidget {
@@ -17,7 +20,6 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      initialBinding: TaskBinding(),
       home: HomeScreen(),
       debugShowCheckedModeBanner: false,
     );
