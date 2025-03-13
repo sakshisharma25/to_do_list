@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       title: 'Todo List App',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       home: HomeScreen(),
       debugShowCheckedModeBanner: false,
     );

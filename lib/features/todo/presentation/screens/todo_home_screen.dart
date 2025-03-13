@@ -479,7 +479,7 @@ class HomeScreen extends StatelessWidget {
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 14, horizontal: 12),
+                                  vertical: 14, horizontal: 6),
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(8),
@@ -489,10 +489,10 @@ class HomeScreen extends StatelessWidget {
                                 children: [
                                   Icon(Icons.calendar_today,
                                       size: 18, color: Colors.green),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 4),
                                   Text(
                                     '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                                    style: const TextStyle(fontSize: 15),
+                                    style: const TextStyle(fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -533,7 +533,7 @@ class HomeScreen extends StatelessWidget {
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 14, horizontal: 12),
+                                  vertical: 14, horizontal: 6),
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(8),
@@ -543,10 +543,10 @@ class HomeScreen extends StatelessWidget {
                                 children: [
                                   Icon(Icons.access_time,
                                       size: 18, color: Colors.green),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 4),
                                   Text(
                                     selectedTime.format(context),
-                                    style: const TextStyle(fontSize: 15),
+                                    style: const TextStyle(fontSize: 13),
                                   ),
                                 ],
                               ),
