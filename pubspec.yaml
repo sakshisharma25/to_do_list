@@ -37,6 +37,8 @@ dependencies:
   get: ^4.7.2
   flutter_local_notifications: ^18.0.1
   uuid: ^4.5.1
+  intl: ^0.20.2
+  flutter_launcher_icons: ^0.14.3
 
 dev_dependencies:
   flutter_test:
@@ -52,7 +54,13 @@ dev_dependencies:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
-# The following section is specific to Flutter packages.
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/task_master_logo.png"
+  adaptive_icon_foreground: "assets/images/task_master_logo.png" # Optional for adaptive icons
+  adaptive_icon_background: "assets/images/task_master_logo.png"  # Optional
+
 flutter:
 
   # The following line ensures that the Material Icons font is
@@ -61,8 +69,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+     - assets/images/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

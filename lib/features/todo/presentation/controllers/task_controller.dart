@@ -30,13 +30,13 @@ class TaskController extends GetxController {
 
   void _sortTasks() {
     switch (sortOption.value) {
-      case 0: // Creation date
+      case 0:
         tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         break;
-      case 1: // Due date
+      case 1:
         tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
         break;
-      case 2: // Priority
+      case 2:
         tasks.sort((a, b) => b.priority.compareTo(a.priority));
         break;
     }
@@ -117,10 +117,21 @@ class TaskController extends GetxController {
     await _notificationsPlugin.initialize(
       initializationSettings,
     );
+    _requestNotificationPermissions();
+  }
+
+  Future<void> _requestNotificationPermissions() async {
+    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+        _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidImplementation != null) {
+      await androidImplementation.requestNotificationsPermission();
+    }
   }
 
   Future<void> _scheduleNotification(Task task) async {
-    if (task.isCompleted || task.dueDate.isBefore(DateTime.now())) {
+    if (task.isCompleted) {
       return;
     }
 
@@ -131,28 +142,149 @@ class TaskController extends GetxController {
       channelDescription: 'Notifications for todo tasks',
       importance: Importance.max,
       priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
     );
 
     const NotificationDetails notificationDetails = NotificationDetails(
       android: androidDetails,
     );
 
-    final scheduledDate = task.dueDate.subtract(const Duration(hours: 1));
+    final now = DateTime.now();
+    if (task.dueDate.isAfter(now)) {
+      try {
+        final int delayMs = task.dueDate.difference(now).inMilliseconds;
+        final int notificationId = task.id.hashCode.abs() % 100000;
 
-    if (scheduledDate.isAfter(DateTime.now())) {
-      final scheduledTZDate = tz.TZDateTime.from(scheduledDate, tz.local);
+        print('Task "${task.title}" due at ${task.dueDate}');
+        print('Current time: $now');
+        print('Scheduling notification with delay of ${delayMs}ms');
+
+        Future.delayed(Duration(milliseconds: delayMs), () async {
+          final currentTasks = await _repository.getTasks();
+          final taskStillExists =
+              currentTasks.any((t) => t.id == task.id && !t.isCompleted);
+
+          if (taskStillExists) {
+            await _notificationsPlugin.show(
+              notificationId,
+              'Task Due Now: ${task.title}',
+              'Your task "${task.title}" is due now',
+              notificationDetails,
+            );
+
+            print('Showed due time notification for task "${task.title}"');
+          }
+        });
+
+        print('Scheduled due time notification for task "${task.title}"');
+
+        final List<int> reminderMinutes = [];
+        reminderMinutes.add(15);
+        if (task.priority >= 2) {
+          reminderMinutes.add(60);
+        }
+        if (task.priority == 3) {
+          reminderMinutes.add(24 * 60);
+        }
+        for (final minutes in reminderMinutes) {
+          final reminderDelayMs = delayMs - (minutes * 60 * 1000);
+          if (reminderDelayMs > 0) {
+            Future.delayed(Duration(milliseconds: reminderDelayMs), () async {
+              final currentTasks = await _repository.getTasks();
+              final taskStillExists =
+                  currentTasks.any((t) => t.id == task.id && !t.isCompleted);
+
+              if (taskStillExists) {
+                String timeText;
+                if (minutes < 60) {
+                  timeText = '$minutes minutes';
+                } else if (minutes == 60) {
+                  timeText = '1 hour';
+                } else if (minutes == 24 * 60) {
+                  timeText = '1 day';
+                } else {
+                  timeText = '${minutes / 60} hours';
+                }
+
+                await _notificationsPlugin.show(
+                  notificationId + reminderMinutes.indexOf(minutes) + 1,
+                  'Task Due Soon: ${task.title}',
+                  'Your task "${task.title}" is due in $timeText',
+                  notificationDetails,
+                );
+
+                print('Showed $timeText reminder for task "${task.title}"');
+              }
+            });
+
+            print(
+                'Scheduled ${minutes}-minute reminder for task "${task.title}"');
+          }
+        }
+      } catch (e) {
+        print('Error scheduling notification: $e');
+      }
+    }
+  }
+
+  Future<void> testNotification() async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'todo_channel',
+      'Todo Notifications',
+      channelDescription: 'Notifications for todo tasks',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      category: AndroidNotificationCategory.reminder,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+    );
+
+    try {
+      await _notificationsPlugin.show(
+        9999,
+        'Immediate Test Notification',
+        'This notification should appear immediately',
+        notificationDetails,
+      );
+      print('Immediate notification sent');
+      final now = tz.TZDateTime.now(tz.local);
+      final scheduledTime = now.add(const Duration(seconds: 10));
+
+      print('Current time: $now');
+      print('Scheduling test notification for: $scheduledTime');
 
       await _notificationsPlugin.zonedSchedule(
-        task.id.hashCode,
-        'Task Due Soon: ${task.title}',
-        'Your task is due in 1 hour',
-        scheduledTZDate,
+        9998,
+        '10-Second Test Notification',
+        'This notification should appear 10 seconds after the test',
+        scheduledTime,
         notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.alarmClock,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
+
+      print('Scheduled test notification for 10 seconds later');
+      await _checkPendingNotifications();
+    } catch (e) {
+      print('Error sending test notification: $e');
+    }
+  }
+
+  Future<void> _checkPendingNotifications() async {
+    final List<PendingNotificationRequest> pendingNotifications =
+        await _notificationsPlugin.pendingNotificationRequests();
+
+    print('Pending notifications count: ${pendingNotifications.length}');
+    for (var notification in pendingNotifications) {
+      print(
+          'Pending notification - ID: ${notification.id}, Title: ${notification.title}');
     }
   }
 }
-
